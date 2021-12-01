@@ -1,0 +1,10 @@
+﻿Customer
+	Add
+	TopCustomers
+
+Purchase
+	AddToCart()
+	FinishPurchase()
+
+Item
+	GetItems
