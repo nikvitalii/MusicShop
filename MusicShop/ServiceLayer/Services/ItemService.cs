@@ -1,5 +1,6 @@
 ﻿using MusicShop.DataLayer.Models;
 using MusicShop.DataLayer.Repositories;
+using MusicShop.ServiceLayer.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,21 @@ namespace MusicShop.ServiceLayer.Services
         public async Task<IEnumerable<ItemWithProducer>> GetItemsWithProducers()
         {
             return await _itemRepository.GetItemWithProducers();
+        }
+
+        public async Task<bool> AddItemToCart(AddToCartDto addToCartDto)
+        {
+            return await _itemRepository.AddItemToCart(addToCartDto);
+        }
+
+        public async Task<IEnumerable<CartItemDto>> GetCartItems()
+        {
+           return await _itemRepository.GetCartItems();
+        }
+
+        public async Task<bool> FinishPurchase(int customerId)
+        {
+            return await _itemRepository.FinishPurchase(customerId);
         }
     }
 }
