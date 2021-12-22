@@ -22,7 +22,7 @@ namespace MusicShop.ServiceLayer.Services
 
         public async Task<IEnumerable<Customer>> GetCustomers()
         {
-            return await _customerRepository.GetCustomers();
+            return await _customerRepository.GetAll();
         }
     }
 }

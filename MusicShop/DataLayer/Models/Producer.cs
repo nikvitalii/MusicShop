@@ -7,7 +7,13 @@ namespace MusicShop.DataLayer.Models
 {
     public class Producer
     {
+        public Producer()
+        {
+            Instruments = new List<Instrument>();
+        }
         public int Id { get; set; }
         public string Name { get; set; }
+
+        public IEnumerable<Instrument> Instruments { get; set; }   
     }
 }

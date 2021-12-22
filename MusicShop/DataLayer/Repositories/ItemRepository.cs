@@ -1,54 +1,30 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MusicShop.DataLayer.Models;
 using MusicShop.ServiceLayer.DTOs;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
-using System.Linq;
+using System.Data.Common;
 using System.Threading.Tasks;
 
 namespace MusicShop.DataLayer.Repositories
 {
-    public class ItemRepository : IItemRepository
+    public class ItemRepository : Repository<Instrument>, IItemRepository
     {
         private string _connectionString { get; }
-        public ItemRepository(IConfiguration configuration)
+        public ItemRepository(MusicShopDbContext context, IConfiguration configuration):base(context)
         {
             _connectionString = configuration.GetConnectionString("default");
         }
 
 
-        public async Task<IEnumerable<ItemWithProducer>> GetItemWithProducers()
+        public async Task<IEnumerable<Instrument>> GetItemWithProducers()
         {
-            List<ItemWithProducer> items = new List<ItemWithProducer>();
-            string query = "SELECT * FROM GetItemsWithProducers()";
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                await connection.OpenAsync();
-                SqlCommand command = new SqlCommand(query, connection);
-                using (SqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        items.Add(new ItemWithProducer
-                        {
-                            ItemId = Convert.ToInt32(reader[0]),
-                            Item = (string)reader[1],
-
-                            ProducerId = Convert.ToInt32(reader[2]),
-                            Producer = (string)reader[3],
-
-                            TypeId = Convert.ToInt32(reader[4]),
-                            Type = (string)reader[5],
-
-                            Cost = Convert.ToInt32(reader[6]),
-                            Amount = Convert.ToInt32(reader[7])
-                        });
-                    }
-                }
-            }
-            return items;
+            return await Context
+                .Instrument
+                .Include(instrument => instrument.Instrument_Type)
+                .Include(instrument => instrument.Producer)
+                .ToListAsync();
         }
 
 
@@ -60,21 +36,31 @@ namespace MusicShop.DataLayer.Repositories
 		                    @instrument_id,
 		                    @amount,
 		                    @discount";
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using (DbConnection connection = Context.Database.GetDbConnection())
             {
                 await connection.OpenAsync();
-                SqlCommand command = new SqlCommand(query, connection);
-                command.Parameters.Add("@customer_id", SqlDbType.Int);
-                command.Parameters["@customer_id"].Value = addToCartDto.CustomerId;
+                DbCommand command = connection.CreateCommand();
+                command.CommandText = query;
 
-                command.Parameters.Add("@instrument_id", SqlDbType.Int);
-                command.Parameters["@instrument_id"].Value = addToCartDto.ItemId;
+                DbParameter parameter = command.CreateParameter();
+                parameter.ParameterName = "@customer_id";
+                parameter.Value = addToCartDto.CustomerId;
+                command.Parameters.Add(parameter);
 
-                command.Parameters.Add("@amount", SqlDbType.Int);
-                command.Parameters["@amount"].Value = addToCartDto.Amount;
+                parameter = command.CreateParameter();
+                parameter.ParameterName = "@instrument_id";
+                parameter.Value = addToCartDto.ItemId;
+                command.Parameters.Add(parameter);
 
-                command.Parameters.Add("@discount", SqlDbType.Int);
-                command.Parameters["@discount"].Value = addToCartDto.Discount;
+                parameter = command.CreateParameter();
+                parameter.ParameterName = "@amount";
+                parameter.Value = addToCartDto.Amount;
+                command.Parameters.Add(parameter);
+
+                parameter = command.CreateParameter();
+                parameter.ParameterName = "@discount";
+                parameter.Value = addToCartDto.Discount;
+                command.Parameters.Add(parameter);
 
                 count = await command.ExecuteNonQueryAsync();
             }
@@ -84,17 +70,14 @@ namespace MusicShop.DataLayer.Repositories
         public async Task<IEnumerable<CartItemDto>> GetCartItems()
         {
             List<CartItemDto> items = new List<CartItemDto>();
-            string query = "SELECT Purchase.customer_id, Purchased_Item.instrument_id, " +
-                            "Instrument.name, Purchased_Item.amount, Purchased_Item.discount " +
-                            "FROM Purchase, Purchased_Item, Instrument " +
-                            "WHERE Purchase.finished = 0 " +
-                            "AND Purchase.id = Purchased_Item.purchase_id " +
-                            "AND Purchased_Item.instrument_id = Instrument.id";
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            string query = "SELECT * FROM GetCartItems()";
+            using (DbConnection connection = Context.Database.GetDbConnection())
             {
                 await connection.OpenAsync();
-                SqlCommand command = new SqlCommand(query, connection);
-                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                DbCommand command = connection.CreateCommand();
+                command.CommandText = query;
+
+                using (DbDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
                     {
@@ -112,22 +95,22 @@ namespace MusicShop.DataLayer.Repositories
             return items;
         }
 
-        public IEnumerable<Item> GetItems()
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<bool> FinishPurchase(int customerId)
         {
             int count = 0;
             string query = @$"EXEC  [dbo].[Sell]
                             @customer_id";
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using (DbConnection connection = Context.Database.GetDbConnection())
             {
                 await connection.OpenAsync();
-                SqlCommand command = new SqlCommand(query, connection);
-                command.Parameters.Add("@customer_id", SqlDbType.Int);
-                command.Parameters["@customer_id"].Value = customerId;
+                DbCommand command = connection.CreateCommand();
+                command.CommandText = query;
+
+                DbParameter parameter = command.CreateParameter();
+                parameter.ParameterName = "@customer_id";
+                parameter.Value = customerId;
+                command.Parameters.Add(parameter);
+
                 count = await command.ExecuteNonQueryAsync();
             }
             return count > 0;

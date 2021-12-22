@@ -7,10 +7,9 @@ using System.Threading.Tasks;
 
 namespace MusicShop.DataLayer.Repositories
 {
-    public interface IItemRepository
+    public interface IItemRepository : IRepository<Instrument>
     {
-        public Task<IEnumerable<ItemWithProducer>> GetItemWithProducers();
-        public IEnumerable<Item> GetItems();
+        public Task<IEnumerable<Instrument>> GetItemWithProducers();
         public Task<bool> AddItemToCart(AddToCartDto addToCartDto);
         public Task<IEnumerable<CartItemDto>> GetCartItems();
         public Task<bool> FinishPurchase(int customerId);

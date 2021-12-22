@@ -8,9 +8,8 @@ using System.Threading.Tasks;
 
 namespace MusicShop.DataLayer.Repositories
 {
-    public interface ICustomerRepository
+    public interface ICustomerRepository : IRepository<Customer>
     {
         public Task<IEnumerable<TopCustomer>> GetTopCustomers();
-        public Task<IEnumerable<Customer>> GetCustomers();
     }
 }

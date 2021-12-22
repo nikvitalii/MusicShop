@@ -16,12 +16,12 @@ namespace MusicShop.ServiceLayer.Services
             _itemRepository = itemRepository;
         }
 
-        public IEnumerable<Item> GetItems()
+        public async Task<IEnumerable<Instrument>> GetItemsAsync()
         {
-            return  _itemRepository.GetItems();
+            return await _itemRepository.GetAll();
         }
 
-        public async Task<IEnumerable<ItemWithProducer>> GetItemsWithProducers()
+        public async Task<IEnumerable<Instrument>> GetItemsWithProducers()
         {
             return await _itemRepository.GetItemWithProducers();
         }

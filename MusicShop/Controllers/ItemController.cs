@@ -31,7 +31,7 @@ namespace MusicShop.Controllers
 
         [HttpGet]
         [Route("GetItemsWithProducers")]
-        public async Task<IEnumerable<ItemWithProducer>> GetsItemWithProducers()
+        public async Task<IEnumerable<Instrument>> GetsItemWithProducers()
         {
             return await _itemService.GetItemsWithProducers();
         }

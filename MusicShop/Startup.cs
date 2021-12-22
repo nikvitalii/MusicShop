@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using MusicShop.DataLayer;
 using MusicShop.DataLayer.Repositories;
 using MusicShop.ServiceLayer.Services;
 using System;
+using Newtonsoft.Json;
+
 
 namespace MusicShop
 {
@@ -24,6 +28,15 @@ namespace MusicShop
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddDbContext<MusicShopDbContext>(opt =>
+            {
+                opt.UseSqlServer(Configuration.GetConnectionString("Default"));
+            });
+
+            services.AddMvc().AddNewtonsoftJson(o =>
+            {
+                o.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+            });
 
             services.AddTransient<IItemRepository, ItemRepository>();
             services.AddTransient<IItemService, ItemService>();

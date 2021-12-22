@@ -1,69 +1,49 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MusicShop.DataLayer.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MusicShop.DataLayer.Repositories
 {
-    public class CustomerRepository : ICustomerRepository
+    public class CustomerRepository : Repository<Customer>, ICustomerRepository
     {
         private string _connectionString { get; }
-        public CustomerRepository(IConfiguration configuration)
+
+        public CustomerRepository(MusicShopDbContext context, IConfiguration configuration):base(context)
         {
             _connectionString = configuration.GetConnectionString("default");
         }
         public async Task<IEnumerable<TopCustomer>> GetTopCustomers()
         {
             List<TopCustomer> topCustomers = new List<TopCustomer>();
-            string query = "SELECT * FROM TopCustomersWithNames()";
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                await connection.OpenAsync();
-                SqlCommand command = new SqlCommand(query, connection);
-                using (SqlDataReader reader = await command.ExecuteReaderAsync()) 
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        topCustomers.Add(new TopCustomer
-                        {
-                            CustomerId = Convert.ToInt32(reader[0]),
-                            FirstName = (string)reader[1],
-                            SecondName = (string)reader[2],
-                            TotalSum = Convert.ToInt32(reader[3])
-                        });
-                    }
-                }
-            }
-            return topCustomers;
-        }
 
-        public async Task<IEnumerable<Customer>> GetCustomers()
-        {
-            List<Customer> customers = new List<Customer>();
-            string query = "SELECT * FROM Customer";
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using(var connection = Context.Database.GetDbConnection())
             {
+                var command = connection.CreateCommand();
+                command.CommandText = "SELECT * FROM TopCustomersWithNames()";
+
+
                 await connection.OpenAsync();
-                SqlCommand command = new SqlCommand(query, connection);
-                using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    while (await reader.ReadAsync())
+                    topCustomers.Add(new TopCustomer
                     {
-                        customers.Add(new Customer
-                        {
-                            Id = Convert.ToInt32(reader[0]),
-                            FirstName = (string)reader[1],
-                            SecondName = (string)reader[2],
-                            PhoneNumber = (string)reader[3],
-                            EMail = (string)reader[4],
-                            RegistrationDate = (DateTime)reader[5]
-                        });
-                    }
+                        CustomerId = Convert.ToInt32(reader[0]),
+                        FirstName = (string)reader[1],
+                        SecondName = (string)reader[2],
+                        TotalSum = Convert.ToInt32(reader[3])
+                    });
                 }
+                await connection.CloseAsync();
             }
-            return customers;
+
+            return topCustomers;
         }
     }
 }
